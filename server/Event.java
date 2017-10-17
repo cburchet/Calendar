@@ -1,0 +1,22 @@
+package server;
+import java.util.Date;
+public class Event
+{
+   public String eventName;
+   public String eventOwner;
+   public String[] eventGuests;
+   public Date start;
+   public Date end;
+   public String eventType;
+    
+   //event constructor
+   public Event(String _eventName, String _eventOwner, String[] _eventGuests, Date _start, Date _end, String _eventType)
+   {
+     eventName = _eventName;
+     eventOwner = _eventOwner;
+     eventGuests = _eventGuests;
+     start = _start;
+     end = _end;
+     eventType = _eventType;
+   }
+}

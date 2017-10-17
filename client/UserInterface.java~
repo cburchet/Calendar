@@ -1,0 +1,201 @@
+package client;
+import server.*;
+import java.rmi.*;
+import java.util.*;
+import java.text.*;
+public class UserInterface
+{
+  static CalendarRemoteInterface manager;
+  static EventInterface usersCalendar;
+  
+  public static void main(String[] args)
+  {
+    try
+    {
+      System.setSecurityManager(new SecurityManager());
+      Scanner userInput = new Scanner(System.in);
+      manager = (CalendarRemoteInterface)Naming.lookup("rmi://localhost:65380/CalendarManager");
+      String user = "";
+      String calendarCreated = " ";
+      do{
+      System.out.println("Enter name of user to create");
+      user = userInput.nextLine();
+      calendarCreated = manager.MakeCalendar(user);
+      System.out.println(calendarCreated);
+      }while(!user.equals(calendarCreated));
+      if (calendarCreated.equals(user))
+      {
+        String option = "";
+        usersCalendar = manager.GetAccessToCalendar(user);
+        Thread thread = new Thread(new AlertThread(usersCalendar));
+        thread.setDaemon(true);
+        thread.start();
+        //todo: improve robustness by handling mistakes
+        while(!option.equalsIgnoreCase("Exit"))
+        {
+          System.out.println("Make choice: Schedule, Delete, Calendars, Users, Retrieve, Exit");
+          option = userInput.nextLine();
+          if (option.equalsIgnoreCase("Schedule"))
+          {
+            ArrayList<String> scheduledGuests = new ArrayList<String>();
+            int guestSize = 0;
+            System.out.println("Enter the event name");
+            String scheduledName = userInput.nextLine();
+            System.out.println("Enter the event type: public, private, group, open");
+            String scheduledType = userInput.nextLine();
+            Boolean eventValid = false;
+              if (scheduledType.equalsIgnoreCase("group"))
+              {
+                eventValid = true;
+                String guests = "";
+                while(!guests.equalsIgnoreCase("Done"))
+                {
+                  System.out.println("Enter a guest name or Done to finish");
+                  guests = userInput.nextLine();
+                  if (!guests.equalsIgnoreCase("Done"))
+                  {
+                    scheduledGuests.add(guests);
+                    System.out.println(guests + " added");
+                    guestSize++;
+                  }
+                  else
+                  {
+                    System.out.println(guests + " not added");
+                  }
+                }
+              }
+              else if (scheduledType.equalsIgnoreCase("open") || scheduledType.equalsIgnoreCase("public") 
+                         || scheduledType.equalsIgnoreCase("private"))
+              {
+                eventValid = true;
+              }
+              else
+              {
+                eventValid = false;
+                System.out.println("Invalid event type");
+              }
+              if (eventValid == true)
+              {
+                System.out.println("Enter the start date: MM/dd/yyyy/HH:mm");
+                String startDate = userInput.nextLine();
+                System.out.println("Enter the end date: MM/dd/yyyy/HH:mm");
+                String endDate = userInput.nextLine();
+                DateFormat formatter = new SimpleDateFormat("MM/dd/yyyy/HH:mm");
+                Date startFormatted = null;
+                Date endFormatted = null;
+                try
+                {
+                  startFormatted = formatter.parse(startDate);
+                  endFormatted = formatter.parse(endDate);
+                }
+                catch(Exception e)
+                {
+                  System.out.println(e);
+                }
+                if (startFormatted != null && endFormatted !=null)
+                {
+                  String eventAdded = usersCalendar.AddEvent(scheduledName, user, scheduledGuests.toArray(new String[scheduledGuests.size()]), 
+                                                             startFormatted, endFormatted, scheduledType);
+                  System.out.println(guestSize);
+                  for (int j = 0; j < guestSize; j++)
+                  {
+                    String[] userList = manager.GetAllUsers();
+                    for (int k = 0; k < userList.length; k++)
+                    {
+                      String guest = scheduledGuests.get(j);
+                      if (userList[k].equals(guest))
+                      {
+                          EventInterface userCalendar = manager.GetAccessToCalendar(userList[k]);
+                          userCalendar.AddEvent(scheduledName, user, scheduledGuests.toArray(new String[scheduledGuests.size()]), 
+                                                startFormatted, endFormatted, scheduledType);
+                      }
+                    }
+                  }
+                  System.out.println(eventAdded);
+                  String[] allEvents = usersCalendar.ReturnAllEventsForUser(user);
+                  for (int i = 0; i < allEvents.length; i++)
+                  {
+                    System.out.println(allEvents[i]);
+                  }
+                }
+                else
+                {
+                  System.out.println("Incorrect date formatting was entered");
+                }
+              }
+          }
+          else if (option.equalsIgnoreCase("Delete"))
+          {
+            String[] allEvents = usersCalendar.ReturnAllEventsForUser(user);
+            for (int i = 0; i < allEvents.length; i++)
+            {
+              System.out.println(Integer.toString(i) + allEvents[i]);
+            }
+            System.out.println("Choose an event");
+            int event = userInput.nextInt();
+            String eventRemoved = usersCalendar.RemoveEvent(user, event);
+            System.out.println(eventRemoved);
+            String[] allEventsAfter = usersCalendar.ReturnAllEventsForUser(user);
+            for (int i = 0; i < allEventsAfter.length; i++)
+            {
+              System.out.println(Integer.toString(i) + allEventsAfter[i]);
+            }
+          }
+          else if (option.equalsIgnoreCase("Calendars"))
+          {
+            System.out.println("Enter name of user whose calendar you want to view");
+            String userToView = userInput.nextLine();
+            String[] allEvents = usersCalendar.ReturnAllEventsForUser(userToView);
+            for (int i = 0; i < allEvents.length; i++)
+            {
+              System.out.println(allEvents[i]);
+            }
+          }
+          else if (option.equalsIgnoreCase("Users"))
+          {
+            String[] allUsers = manager.GetAllUsers();
+            for (int i = 0; i < allUsers.length; i++)
+            {
+              System.out.println(allUsers[i]);
+            }
+          }
+          else if (option.equalsIgnoreCase("Retrieve"))
+          {
+            System.out.println("Enter the user whose events you want to retrieve");
+            String userEventsToRetrieve = userInput.nextLine();
+            System.out.println("Enter the start date: MM/dd/yyyy/HH:mm");
+            String startDate = userInput.nextLine();
+            System.out.println("Enter the end date: MM/dd/yyyy/HH:mm");
+            String endDate = userInput.nextLine();
+            DateFormat formatter = new SimpleDateFormat("MM/dd/yyyy/HH:mm");
+            Date endFormatted = null;
+            Date startFormatted = null;
+            try
+            {
+              startFormatted = formatter.parse(startDate);
+              endFormatted = formatter.parse(endDate);
+            }
+            catch(Exception e)
+            {
+              System.out.println(e);
+              continue;
+            }
+            String[] eventsInRange = usersCalendar.RetrieveUsersEventsWithinRange(userEventsToRetrieve, startFormatted, endFormatted);
+            for (int i = 0; i < eventsInRange.length; i++)
+            {
+              System.out.println(eventsInRange[i]);
+            }
+          }
+        }
+      }
+      else
+      {
+        System.out.println(calendarCreated);
+      }
+    }
+    catch(Exception e)
+    {
+      System.out.println(e);
+    }
+  }
+}

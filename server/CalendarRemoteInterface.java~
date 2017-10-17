@@ -1,0 +1,14 @@
+package server;
+import java.rmi.RemoteException;
+import java.rmi.Remote;
+import java.util.*;
+
+public interface CalendarRemoteInterface extends Remote
+{
+  public static ArrayList<CalendarObject> calendarObjects = new ArrayList<CalendarObject>();
+  public static ArrayList<String> users = new ArrayList<String>();
+  public String MakeCalendar(String userName) throws RemoteException;
+  public EventInterface GetAccessToCalendar(String name) throws RemoteException;
+  public String[] GetAllUsers() throws RemoteException;
+  public ArrayList<CalendarObject> GetAllCalendars() throws RemoteException;
+}

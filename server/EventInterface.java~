@@ -1,0 +1,14 @@
+package server;
+import java.util.*;
+import java.rmi.*;
+
+public interface EventInterface extends Remote
+{
+  public ArrayList<Event> GetListsOfEvents() throws RemoteException;
+  public String EventAlert() throws RemoteException;
+  public String[] ReturnAllEventsForUser(String user) throws RemoteException;
+  public String RemoveEvent(String user, int event) throws RemoteException;
+  public String AddEvent(String eventName, String eventOwner, String[] eventGuests,
+                         Date start, Date end, String eventType) throws RemoteException;
+  public String[] RetrieveUsersEventsWithinRange(String user, Date start, Date end) throws RemoteException;
+}

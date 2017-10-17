@@ -1,0 +1,37 @@
+package client;
+import java.rmi.*;
+import server.*;
+public class AlertThread implements Runnable
+{
+ //not working add prints to check whats wrong
+  EventInterface threadCalendar;
+  public AlertThread(EventInterface calendarObject)
+  {
+    threadCalendar = calendarObject;
+  }
+  
+  public void run()
+  {
+    System.out.println("started");
+    String alertString = "";
+    while(true)
+    {
+      try
+      {
+        alertString = threadCalendar.EventAlert();
+        if (alertString.equals(""))
+        {
+          
+        }
+        else
+        {
+          System.out.println(alertString);
+        }
+      }
+      catch(Exception e)
+      {
+        System.out.println(e);
+      }
+    }
+  }
+}
